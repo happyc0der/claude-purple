@@ -1,0 +1,11 @@
+{
+  "name": "claude-purple",
+  "owner": { "name": "happyc0der" },
+  "plugins": [
+    {
+      "name": "browser-ad-remover",
+      "source": "./plugins/browser-ad-remover",
+      "description": "Removes ad elements from pages in Claude Code's built-in browser before Claude reads or screenshots them."
+    }
+  ]
+}

@@ -1,0 +1,7 @@
+*.log
+job.txt
+check.txt
+probe.json
+*.png
+.DS_Store
+node_modules/

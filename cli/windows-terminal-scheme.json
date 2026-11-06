@@ -1,0 +1,23 @@
+{
+  "name": "Modern Purple",
+  "background": "#0F032B",
+  "foreground": "#9A9AF0",
+  "cursorColor": "#E85C71",
+  "selectionBackground": "#4C0BD8",
+  "black": "#0D0225",
+  "red": "#FF5370",
+  "green": "#C3E88D",
+  "yellow": "#FFCB6B",
+  "blue": "#82AAFF",
+  "purple": "#C792EA",
+  "cyan": "#89DDFF",
+  "white": "#E2E2E2",
+  "brightBlack": "#5D4B85",
+  "brightRed": "#F07178",
+  "brightGreen": "#A9CF6F",
+  "brightYellow": "#F7C05A",
+  "brightBlue": "#9A9AF0",
+  "brightPurple": "#FC8FD8",
+  "brightCyan": "#99E0FC",
+  "brightWhite": "#FFFFFF"
+}

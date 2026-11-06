@@ -1,0 +1,9 @@
+{
+  "name": "browser-ad-remover",
+  "version": "0.2.0",
+  "description": "Removes ad elements from pages in Claude's built-in browser before Claude reads or screenshots them.",
+  "author": {
+    "name": "happyc0der"
+  },
+  "license": "MIT"
+}
