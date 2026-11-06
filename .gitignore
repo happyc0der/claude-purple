@@ -5,3 +5,4 @@ probe.json
 *.png
 .DS_Store
 node_modules/
+!docs/screenshots/*.png
