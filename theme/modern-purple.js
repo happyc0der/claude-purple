@@ -134,6 +134,8 @@
   /* Sidebar section headers: bold, solid purple. */
   html body [data-sidebar-group-label] [data-group-toggle], html body [data-sidebar-group-label] [data-group-toggle] * { color: #c792ea !important; font-weight: 700 !important; opacity: 1 !important; }
   html body input::placeholder, html body textarea::placeholder { color: #b8b8f8 !important; opacity: 1 !important; }
+  /* macOS draws the sidebar transparent over its grey frosted-glass backdrop; paint it solid. */
+  html[data-sidebar-vibrancy] .dframe-root .dframe-sidebar, html .dframe-root[data-variant] .dframe-sidebar { background-image: none !important; background-color: #0d0225 !important; }
   .hljs-comment, .hljs-quote { color: #616769 !important; }
   .hljs-keyword, .hljs-selector-tag, .hljs-doctag, .hljs-meta .hljs-keyword { color: #ad6dd8 !important; }
   .hljs-string, .hljs-symbol, .hljs-template-tag { color: #a9cf6f !important; }
