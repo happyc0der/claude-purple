@@ -35,6 +35,10 @@
     --df-sidebar-bg: #0d0225 !important;
     --df-web-sidebar-bg: #0d0225 !important;
     --cds-fizzy-lake-color-sidebar: #0d0225 !important;
+    --df-sidebar-tint: #0d0225 !important;
+    --df-sidebar-tint-share: 100% !important;
+    --df-selected: #4c0bd88c !important;
+    --df-hover: #6471e42e !important;
     --df-surface-primary: 258 87% 9% !important;
     --df-z0: 259 89.7% 7.6% !important;
     --df-z1: 258 87% 9% !important;
