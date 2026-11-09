@@ -1,11 +1,18 @@
 # Applies theme\modern-purple.js to the Claude desktop app through its own DevTools.
 # Needs Developer Mode (Help > Troubleshooting > Enable Developer Mode).
-#   -Check      read-only: reports Developer Mode and the windows, sends no keys
-#   (no args)   apply once to the running app
-#   -Watch      stay running and apply each time the app starts (for a logon task)
-# It never launches Claude. It only pastes into a window it has confirmed is
-# Claude's DevTools, and stops rather than typing anywhere else.
-#   -AllowPasting  also types Chrome's "allow pasting" consent first (first run only)
+#
+#   (no args)      apply once to the running app
+#   -Check         read-only: report Developer Mode, the windows and idle time; sends no keys
+#   -Watch         keep running; apply whenever Claude starts or looks grey again (logon task)
+#   -AllowPasting  also type Chrome's "allow pasting" consent (needed once, on the first run)
+#   -Payload <js> -ResultFile <path> [-ResultWait <s>]
+#                  run another script instead and save what it copies to the clipboard
+#                  (used for read-only diagnostics)
+#   -KeepOpen      leave DevTools open and save a picture of it, for troubleshooting
+#
+# It never launches Claude. It waits until the keyboard and mouse have been idle for
+# 4 seconds, only types into a window it has confirmed is Claude's own DevTools
+# (title names claude.ai), restores the clipboard, and logs every run.
 param([switch]$Check, [switch]$Watch, [switch]$AllowPasting, [switch]$KeepOpen, [string]$Payload, [string]$ResultFile, [int]$ResultWait = 0)
 
 $ErrorActionPreference = 'Stop'
@@ -62,6 +69,16 @@ function Get-MainWindow { Get-ClaudeWindows | Where-Object { $_.Title -notmatch 
 # Only Claude's own page: the title must name claude.ai, never another site's DevTools.
 function Get-DevToolsWindow { Get-ClaudeWindows | Where-Object { $_.Title -match '^(Developer Tools|DevTools).*claude\.ai' } | Select-Object -First 1 }
 
+# Saves a picture of one window only, never the rest of the screen.
+function Save-WindowShot($handle, $path) {
+    Add-Type -AssemblyName System.Drawing
+    $r = New-Object ThemeWin+RECT
+    [void][ThemeWin]::GetWindowRect($handle, [ref]$r)
+    $bmp = New-Object System.Drawing.Bitmap ([Math]::Max(1, $r.Right - $r.Left)), ([Math]::Max(1, $r.Bottom - $r.Top))
+    $g = [System.Drawing.Graphics]::FromImage($bmp)
+    try { $g.CopyFromScreen($r.Left, $r.Top, 0, 0, $bmp.Size); $bmp.Save($path) } finally { $g.Dispose(); $bmp.Dispose() }
+}
+
 function Wait-For($test, [int]$seconds) {
     $end = (Get-Date).AddSeconds($seconds)
     while ((Get-Date) -lt $end) { $r = & $test; if ($r) { return $r }; Start-Sleep -Milliseconds 250 }
@@ -76,14 +93,10 @@ function Invoke-Apply {
     if ([ThemeWin]::IdleMs() -lt 4000) { return Write-Log 'skip: keyboard or mouse in use' }
     $wasMinimized = [ThemeWin]::IsIconic($main.Handle)
     if ($wasMinimized) { [void][ThemeWin]::ShowWindow($main.Handle, 9); Start-Sleep -Milliseconds 1200 }
-    try { Invoke-ApplyCore } finally { if ($wasMinimized) { [void][ThemeWin]::ShowWindow($main.Handle, 6) } }
+    try { Invoke-ApplyCore $main } finally { if ($wasMinimized) { [void][ThemeWin]::ShowWindow($main.Handle, 6) } }
 }
 
-function Invoke-ApplyCore {
-    $main = Get-MainWindow
-    if (-not $main) { return Write-Log 'skip: Claude is not running' }
-    # Never steal the keyboard from someone who is typing.
-    if ([ThemeWin]::IdleMs() -lt 4000) { return Write-Log 'skip: keyboard or mouse in use' }
+function Invoke-ApplyCore($main) {
 
     $devtools = Get-DevToolsWindow
     if (-not $devtools) {
@@ -129,13 +142,7 @@ function Invoke-ApplyCore {
         if ($null -ne $saved) { Set-Clipboard -Value $saved } else { Set-Clipboard -Value $null }
     }
     if ($KeepOpen) {
-        Add-Type -AssemblyName System.Drawing
-        $r = New-Object ThemeWin+RECT
-        [void][ThemeWin]::GetWindowRect($devtools.Handle, [ref]$r)
-        $bmp = New-Object System.Drawing.Bitmap ([Math]::Max(1, $r.Right - $r.Left)), ([Math]::Max(1, $r.Bottom - $r.Top))
-        $g = [System.Drawing.Graphics]::FromImage($bmp)
-        $g.CopyFromScreen($r.Left, $r.Top, 0, 0, $bmp.Size)
-        $bmp.Save((Join-Path $here 'debug-devtools.png')); $g.Dispose(); $bmp.Dispose()
+        Save-WindowShot $devtools.Handle (Join-Path $here 'debug-devtools.png')
         return Write-Log 'kept DevTools open for inspection'
     }
     if ([ThemeWin]::GetForegroundWindow() -eq $devtools.Handle) { [System.Windows.Forms.SendKeys]::SendWait('%{F4}') }
@@ -143,18 +150,7 @@ function Invoke-ApplyCore {
     [void][ThemeWin]::SetForegroundWindow($main.Handle)
     Start-Sleep -Milliseconds 500
     $shot = Join-Path $here 'last-apply.png'
-    try {
-        Add-Type -AssemblyName System.Drawing
-        # Capture only Claude's own window, wherever it is, never the rest of the screen.
-        $r = New-Object ThemeWin+RECT
-        [void][ThemeWin]::GetWindowRect($main.Handle, [ref]$r)
-        $bmp = New-Object System.Drawing.Bitmap ([Math]::Max(1, $r.Right - $r.Left)), ([Math]::Max(1, $r.Bottom - $r.Top))
-        $g = [System.Drawing.Graphics]::FromImage($bmp)
-        $g.CopyFromScreen($r.Left, $r.Top, 0, 0, $bmp.Size)
-        $bmp.Save($shot)
-        $g.Dispose(); $bmp.Dispose()
-        [void](Write-Log "screenshot: $shot")
-    } catch { [void](Write-Log "screenshot failed: $_") }
+    try { Save-WindowShot $main.Handle $shot } catch { [void](Write-Log "screenshot failed: $_") }
     # Judge by the screen, not by having sent the keys: count purple-tinted points.
     $purple = 0; $total = 0
     try {
@@ -212,7 +208,8 @@ if ($Watch) {
         if ($p -and $p.StartTime -ne $lastStart) {
             # Give the interface time to load, then keep trying until it isn't interrupted.
             Start-Sleep -Seconds 20
-            $result = Invoke-Apply
+            # An unexpected error is logged and retried, never allowed to stop the watcher.
+            try { $result = Invoke-Apply } catch { $result = Write-Log "error: $_" }
             if ($result -eq 'applied') { $lastStart = $p.StartTime }
         }
         Start-Sleep -Seconds 30

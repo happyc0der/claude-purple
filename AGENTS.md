@@ -70,12 +70,22 @@ Merge; don't replace the file.
 | Symptom | Cause and fix |
 |---|---|
 | Log says `stop: DevTools did not open` | Developer Mode is off, or Claude wasn't restarted after turning it on. |
+| macOS log says `no window titled Developer Tools appeared` | Same cause as above, on macOS. |
 | Console shows "Type 'allow pasting'" | First run only. Windows: run `apply-theme.ps1 -AllowPasting`. macOS: the job already types it. |
 | macOS log says `Accessibility permission is off` | Re-add ClaudePurple under Accessibility (step 4.2). |
 | macOS log says `Claude did not come to the front` | Another app (often System Settings) was in front; it retries. |
 | `skip: keyboard or mouse in use` | Expected. It waits until the user is idle. |
 | Parts are still grey after an app update | The app renamed colour variables. Update `theme/modern-purple.js`. |
+| Claude was minimized | Fine: the scripts restore the window for a few seconds and minimize it again. |
 
 ## Uninstall
 Windows: `pwsh -File windows\uninstall.ps1`. macOS: `bash macos/uninstall.sh`, then remove
 ClaudePurple from the Accessibility list. Restart Claude afterwards.
+
+## Changing this repo
+- Keep the reskin colours-only: no hidden elements, no changed behaviour.
+- Never send keys anywhere but a window confirmed by title as Claude's DevTools for claude.ai.
+- Screenshots in `docs/` must have chats, session names and personal data blurred.
+- Run the same checks as CI before committing: `node --check` on the JS files, `bash -n` on
+  the shell scripts, a PowerShell parse of the `.ps1` files, and JSON validation.
+- Add a line to `CHANGELOG.md` for anything a user would notice.

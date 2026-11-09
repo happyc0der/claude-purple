@@ -1,0 +1,42 @@
+name: check
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: JavaScript syntax
+        run: |
+          node --check theme/modern-purple.js
+          # JXA files use macOS-only globals, so only parse them.
+          for f in macos/runner.js macos/launcher.js; do
+            node -e "new Function(require('fs').readFileSync('$f','utf8'))"
+          done
+      - name: Shell syntax
+        run: |
+          for f in macos/*.sh; do bash -n "$f"; done
+          shellcheck -S error macos/*.sh
+      - name: PowerShell syntax
+        shell: pwsh
+        run: |
+          $bad = 0
+          foreach ($f in Get-ChildItem windows -Filter *.ps1) {
+            $errs = $null
+            [void][System.Management.Automation.Language.Parser]::ParseFile($f.FullName, [ref]$null, [ref]$errs)
+            if ($errs) { $errs | ForEach-Object { Write-Host "$($f.Name): $_" }; $bad++ }
+          }
+          exit $bad
+      - name: JSON and plist
+        run: |
+          for f in $(git ls-files '*.json'); do python3 -m json.tool "$f" > /dev/null || exit 1; done
+          python3 -c "import plistlib,glob;[plistlib.load(open(f,'rb')) for f in glob.glob('macos/*.plist')]"

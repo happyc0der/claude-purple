@@ -1,10 +1,19 @@
 // ClaudePurple runner, run by the launcher app (which holds the Accessibility permission).
-// job.txt lines: 1 mode (check | apply)  2 payload path  3 result path or "-"
-//                4 allow-pasting 0/1      5 keep DevTools open 0/1
-// "check" only reads window titles and types nothing.
+// It is a plain file so it can be updated without rebuilding the app (a rebuild would
+// reset that permission).
+//
+// job.txt, one value per line:
+//   1 mode: apply | check | show | minimize
+//   2 payload path (apply)   3 result path or "-"   4 allow-pasting 0/1   5 keep DevTools open 0/1
+//
+//   apply     paste the payload into Claude's DevTools console
+//   check     read-only: write the window titles and state to check.txt, type nothing
+//   show      bring an existing DevTools window to the front
+//   minimize  test helper: minimize Claude's main window
+//
 // Safety: before every group of keys, Claude must be the front app AND its focused
-// window's title must start with "Developer Tools". Otherwise it stops, so it can
-// never type into Claude's main window or message box.
+// window's title must start with "Developer Tools" and name claude.ai. Otherwise it
+// stops, so it can never type into Claude's main window, message box or another page.
 (() => {
   const app = Application.currentApplication();
   app.includeStandardAdditions = true;
@@ -55,10 +64,10 @@
 
   if (mode === 'check') {
     try {
-    const wins = windows(axApp).map(w => w.title);
-    const front = $.NSWorkspace.sharedWorkspace.frontmostApplication.localizedName.js;
-    const focused = focusedTitle(axApp);
-    out(JSON.stringify({ trusted: true, front, windows: wins, focused, mainMinimized: mainWin ? isMin(mainWin.el) : null }));
+      const wins = windows(axApp).map(w => w.title);
+      const front = $.NSWorkspace.sharedWorkspace.frontmostApplication.localizedName.js;
+      const focused = focusedTitle(axApp);
+      out(JSON.stringify({ trusted: true, front, windows: wins, focused, mainMinimized: mainWin ? isMin(mainWin.el) : null }));
     } catch (e) { log('error in check: ' + e); return 'error'; }
     log('check done');
     return 'checked';
@@ -69,10 +78,10 @@
     if (!w) { out('no devtools window'); return 'none'; }
     ca.activateWithOptions(1);
     $.AXUIElementPerformAction(w.el, $('AXRaise'));
-    const pos = attr(w.el, 'AXPosition'), size = attr(w.el, 'AXSize');
     out('raised: ' + w.title.slice(0, 60) + ' minimized=' + str(attr(w.el, 'AXMinimized')));
     return 'shown';
   }
+
   const CMD = 0x100000, SHIFT = 0x20000, OPT = 0x80000;
   const key = (code, flags) => {
     for (const down of [true, false]) {
@@ -96,7 +105,7 @@
 
   let dev = windows(axApp).find(w => isDev(w.title));
   if (!dev) {
-    if (isDev(focusedTitle(axApp))) { log('stop: unexpected focus state'); return finish('odd'); }
+    if (isDev(focusedTitle(axApp))) { log('stop: DevTools has focus but was not listed as a window'); return finish('unexpected'); }
     key(34, CMD | OPT); // Cmd+Opt+I, the app's own "Show Dev Tools" shortcut
     for (let i = 0; i < 40 && !dev; i++) { delay(0.25); dev = windows(axApp).find(w => isDev(w.title)); }
   }

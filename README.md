@@ -78,11 +78,16 @@ The Claude desktop app has no custom-theme support, its files are signed and int
 2. When Claude starts, a small watcher (a per-user logon task on Windows, a LaunchAgent on macOS) waits until you've stopped typing, opens DevTools, and pastes [`theme/modern-purple.js`](theme/modern-purple.js) into the console.
 3. That script only sets **colour values**. It finds the app's neutral greys at runtime, including styles that menus load later, and shifts their hue while keeping their brightness. It also maps the app's code theme to the VS Code theme's syntax colours, including inside code blocks.
 
+4. If Claude is minimized, it restores the window for those few seconds and minimizes it again.
+5. On Windows it then checks a picture of Claude's own window (never the rest of your screen) to confirm the colours took, and re-applies if a page reload turns the app grey again.
+
 **Safety:**
-- **Window check:** the automation only types after confirming, by window title, that the focused window is Claude's "Developer Tools". Otherwise it stops.
+- **Window check:** the automation only types after confirming, by window title, that the focused window is Claude's "Developer Tools" for claude.ai. Otherwise it stops.
 - **Your input comes first:** it waits until the keyboard and mouse have been idle for 4 seconds, and restores your clipboard afterwards.
-- **Logged:** every run is recorded.
+- **Logged:** every run is recorded (`windows/apply-theme.log`, or `~/Library/Application Support/ClaudePurple/apply.log`).
 - **Read the scripts first:** they're short, and Developer Mode gives DevTools access to your signed-in session.
+
+**Performance:** the watchers check every 30 seconds and use no measurable CPU in between. Inside the app, a full recolour takes about 40 ms, and the code-block watcher wakes only when a new code block appears, not on every streamed word.
 
 ## browser-ad-remover: what it saves
 Claude Code's built-in browser has no extension or content-blocking support, so the plugin hooks the browser tools and runs a small sweep just before Claude reads or screenshots a page. Measured on three ad-heavy pages:
@@ -100,6 +105,15 @@ Claude Code's built-in browser has no extension or content-blocking support, so 
 - **Page reloads on macOS:** a reload without an app restart isn't detected yet. Windows notices and re-applies.
 - **Pop-out windows:** quick entry and other separate windows aren't recoloured.
 - **App updates:** if Anthropic renames its colour values, parts fall back to the default colours until the theme file is updated.
+
+## Troubleshooting
+| Symptom | Fix |
+|---|---|
+| Nothing happens after a restart | Check that Developer Mode is on (**Help > Troubleshooting**), then read the log. `pwsh -File windows\apply-theme.ps1 -Check` reports the windows it sees and sends no keys. |
+| Log says "keyboard or mouse in use" | Leave the computer alone for a few seconds; the watcher retries on its own. |
+| The console shows a pasting warning | Run the apply once with `-AllowPasting` (Windows). The macOS installer handles this on the first run. |
+| macOS log says "Accessibility permission is off" | Re-add `~/Applications/ClaudePurple.app` under **Privacy & Security > Accessibility**. Re-running the installer rebuilds the app and resets this permission. |
+| Some parts are grey after an app update | Open an issue with a screenshot (blur your chats); the app probably renamed a colour value. |
 
 ## Uninstall
 Run `windows/uninstall.ps1` or `macos/uninstall.sh`, then restart Claude. On macOS, also remove ClaudePurple from the Accessibility list.
