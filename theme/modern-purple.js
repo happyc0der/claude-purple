@@ -250,8 +250,11 @@
   if (window.__modernPurpleShadowWatcher) window.__modernPurpleShadowWatcher.disconnect();
   {
     let t = 0;
-    window.__modernPurpleShadowWatcher = new MutationObserver(() => {
-      if (t) return;
+    // Only wake when a code block (or something containing one) was added, not on
+    // every streamed token.
+    const addsCode = n => n.nodeType === 1 && (n.tagName === 'DIFFS-CONTAINER' || (n.firstElementChild && n.querySelector('diffs-container')));
+    window.__modernPurpleShadowWatcher = new MutationObserver(list => {
+      if (t || !list.some(m => [...m.addedNodes].some(addsCode))) return;
       t = setTimeout(() => { t = 0; applyShadows(); }, 300);
     });
     window.__modernPurpleShadowWatcher.observe(document.body, { childList: true, subtree: true });

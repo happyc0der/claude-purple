@@ -29,6 +29,7 @@ public static class ThemeWin {
   [DllImport("user32.dll")] public static extern uint GetLastInputInfo(ref LASTINPUT i);
   [DllImport("user32.dll")] public static extern bool GetWindowRect(IntPtr h, out RECT r);
   [DllImport("user32.dll")] public static extern bool IsIconic(IntPtr h);
+  [DllImport("user32.dll")] public static extern bool ShowWindow(IntPtr h, int cmd);
   [StructLayout(LayoutKind.Sequential)] public struct RECT { public int Left, Top, Right, Bottom; }
   [StructLayout(LayoutKind.Sequential)] public struct LASTINPUT { public uint cbSize; public uint dwTime; }
   public static uint IdleMs() { var i = new LASTINPUT(); i.cbSize = 8; GetLastInputInfo(ref i); return (uint)Environment.TickCount - i.dwTime; }
@@ -58,7 +59,8 @@ function Get-ClaudeWindows {
 }
 
 function Get-MainWindow { Get-ClaudeWindows | Where-Object { $_.Title -notmatch '^(Developer Tools|DevTools)' } | Select-Object -First 1 }
-function Get-DevToolsWindow { Get-ClaudeWindows | Where-Object { $_.Title -match '^(Developer Tools|DevTools)' } | Select-Object -First 1 }
+# Only Claude's own page: the title must name claude.ai, never another site's DevTools.
+function Get-DevToolsWindow { Get-ClaudeWindows | Where-Object { $_.Title -match '^(Developer Tools|DevTools).*claude\.ai' } | Select-Object -First 1 }
 
 function Wait-For($test, [int]$seconds) {
     $end = (Get-Date).AddSeconds($seconds)
@@ -66,7 +68,18 @@ function Wait-For($test, [int]$seconds) {
     $null
 }
 
+# A minimized Claude has no focused page, so the DevTools shortcut does nothing.
+# Restore it for the few seconds this takes, then minimize it again.
 function Invoke-Apply {
+    $main = Get-MainWindow
+    if (-not $main) { return Write-Log 'skip: Claude is not running' }
+    if ([ThemeWin]::IdleMs() -lt 4000) { return Write-Log 'skip: keyboard or mouse in use' }
+    $wasMinimized = [ThemeWin]::IsIconic($main.Handle)
+    if ($wasMinimized) { [void][ThemeWin]::ShowWindow($main.Handle, 9); Start-Sleep -Milliseconds 1200 }
+    try { Invoke-ApplyCore } finally { if ($wasMinimized) { [void][ThemeWin]::ShowWindow($main.Handle, 6) } }
+}
+
+function Invoke-ApplyCore {
     $main = Get-MainWindow
     if (-not $main) { return Write-Log 'skip: Claude is not running' }
     # Never steal the keyboard from someone who is typing.
@@ -117,10 +130,11 @@ function Invoke-Apply {
     }
     if ($KeepOpen) {
         Add-Type -AssemblyName System.Drawing
-        $b = [System.Windows.Forms.Screen]::PrimaryScreen.Bounds
-        $bmp = New-Object System.Drawing.Bitmap $b.Width, $b.Height
+        $r = New-Object ThemeWin+RECT
+        [void][ThemeWin]::GetWindowRect($devtools.Handle, [ref]$r)
+        $bmp = New-Object System.Drawing.Bitmap ([Math]::Max(1, $r.Right - $r.Left)), ([Math]::Max(1, $r.Bottom - $r.Top))
         $g = [System.Drawing.Graphics]::FromImage($bmp)
-        $g.CopyFromScreen($b.Location, [System.Drawing.Point]::Empty, $b.Size)
+        $g.CopyFromScreen($r.Left, $r.Top, 0, 0, $bmp.Size)
         $bmp.Save((Join-Path $here 'debug-devtools.png')); $g.Dispose(); $bmp.Dispose()
         return Write-Log 'kept DevTools open for inspection'
     }
@@ -131,10 +145,12 @@ function Invoke-Apply {
     $shot = Join-Path $here 'last-apply.png'
     try {
         Add-Type -AssemblyName System.Drawing
-        $b = [System.Windows.Forms.Screen]::PrimaryScreen.Bounds
-        $bmp = New-Object System.Drawing.Bitmap $b.Width, $b.Height
+        # Capture only Claude's own window, wherever it is, never the rest of the screen.
+        $r = New-Object ThemeWin+RECT
+        [void][ThemeWin]::GetWindowRect($main.Handle, [ref]$r)
+        $bmp = New-Object System.Drawing.Bitmap ([Math]::Max(1, $r.Right - $r.Left)), ([Math]::Max(1, $r.Bottom - $r.Top))
         $g = [System.Drawing.Graphics]::FromImage($bmp)
-        $g.CopyFromScreen($b.Location, [System.Drawing.Point]::Empty, $b.Size)
+        $g.CopyFromScreen($r.Left, $r.Top, 0, 0, $bmp.Size)
         $bmp.Save($shot)
         $g.Dispose(); $bmp.Dispose()
         [void](Write-Log "screenshot: $shot")
@@ -199,7 +215,7 @@ if ($Watch) {
             $result = Invoke-Apply
             if ($result -eq 'applied') { $lastStart = $p.StartTime }
         }
-        Start-Sleep -Seconds 10
+        Start-Sleep -Seconds 30
     }
 }
 

@@ -26,5 +26,5 @@ while true; do
       [ $tries -ge 60 ] && last="$start"
     fi
   fi
-  sleep 10
+  sleep 30
 done

@@ -33,7 +33,7 @@
     return ObjC.castRefToObject(list).js.map(w => ({ el: w, title: str(attr(w, 'AXTitle')) || '' }));
   };
   const focusedTitle = axApp => { const w = attr(axApp, 'AXFocusedWindow'); return w ? (str(attr(ObjC.castRefToObject(w), 'AXTitle')) || '') : ''; };
-  const isDev = t => t.indexOf('Developer Tools') === 0;
+  const isDev = t => t.indexOf('Developer Tools') === 0 && t.indexOf('claude.ai') !== -1; // only Claude's own page
 
   const trusted = $.AXIsProcessTrusted();
   const ca = claudeApp();
