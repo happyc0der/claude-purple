@@ -41,12 +41,24 @@
   if (!ca) { log('skip: Claude is not running'); out('claude not running'); return 'no claude'; }
   const axApp = $.AXUIElementCreateApplication(ca.processIdentifier);
 
+  // A minimized Claude has no focused page, so the DevTools shortcut does nothing.
+  // Restore its main window for the few seconds this takes, then minimize it again.
+  const isMin = el => { const v = attr(el, 'AXMinimized'); try { return v ? ObjC.castRefToObject(v).js === true : false; } catch (e) { return false; } };
+  const setMin = (el, b) => $.AXUIElementSetAttributeValue(el, $('AXMinimized'), $.NSNumber.numberWithBool(b));
+  const mainWin = windows(axApp).find(w => w.title.indexOf('Developer Tools') !== 0);
+
+  if (mode === 'minimize') { // test helper only: minimizes Claude's main window
+    if (mainWin) setMin(mainWin.el, true);
+    out('minimized=' + (mainWin ? isMin(mainWin.el) : 'no window'));
+    return 'minimized';
+  }
+
   if (mode === 'check') {
     try {
     const wins = windows(axApp).map(w => w.title);
     const front = $.NSWorkspace.sharedWorkspace.frontmostApplication.localizedName.js;
     const focused = focusedTitle(axApp);
-    out(JSON.stringify({ trusted: true, front, windows: wins, focused }));
+    out(JSON.stringify({ trusted: true, front, windows: wins, focused, mainMinimized: mainWin ? isMin(mainWin.el) : null }));
     } catch (e) { log('error in check: ' + e); return 'error'; }
     log('check done');
     return 'checked';
@@ -75,27 +87,30 @@
   const getClip = () => { const s = pb.stringForType($.NSPasteboardTypeString); return s && s.js !== undefined ? s.js : ''; };
   const safe = () => frontIsClaude() && isDev(focusedTitle(axApp));
 
+  const wasMin = mainWin ? isMin(mainWin.el) : false;
+  if (wasMin) { setMin(mainWin.el, false); delay(1.2); }
+  const finish = r => { if (wasMin) setMin(mainWin.el, true); return r; };
   ca.activateWithOptions(1); // NSApplicationActivateIgnoringOtherApps
   delay(1);
-  if (!frontIsClaude()) { log('stop: Claude did not come to the front'); return 'not front'; }
+  if (!frontIsClaude()) { log('stop: Claude did not come to the front'); return finish('not front'); }
 
   let dev = windows(axApp).find(w => isDev(w.title));
   if (!dev) {
-    if (isDev(focusedTitle(axApp))) { log('stop: unexpected focus state'); return 'odd'; }
+    if (isDev(focusedTitle(axApp))) { log('stop: unexpected focus state'); return finish('odd'); }
     key(34, CMD | OPT); // Cmd+Opt+I, the app's own "Show Dev Tools" shortcut
     for (let i = 0; i < 40 && !dev; i++) { delay(0.25); dev = windows(axApp).find(w => isDev(w.title)); }
   }
-  if (!dev) { log('stop: no window titled Developer Tools appeared (is Developer Mode on?)'); return 'no devtools'; }
+  if (!dev) { log('stop: no window titled Developer Tools appeared (is Developer Mode on?)'); return finish('no devtools'); }
   $.AXUIElementPerformAction(dev.el, $('AXRaise'));
   delay(0.6);
-  if (!safe()) { log('stop: the focused window is not Developer Tools (focused: ' + focusedTitle(axApp).slice(0, 40) + ')'); return 'unsafe'; }
+  if (!safe()) { log('stop: the focused window is not Developer Tools (focused: ' + focusedTitle(axApp).slice(0, 40) + ')'); return finish('unsafe'); }
 
   const saved = getClip();
   try {
     key(35, CMD | SHIFT); delay(0.9);
-    if (!safe()) { log('stop: focus moved before the command menu'); return 'unsafe'; }
+    if (!safe()) { log('stop: focus moved before the command menu'); return finish('unsafe'); }
     setClip('Show Console'); key(9, CMD); delay(0.9); key(36); delay(1.2);
-    if (!safe()) { log('stop: focus moved before pasting'); return 'unsafe'; }
+    if (!safe()) { log('stop: focus moved before pasting'); return finish('unsafe'); }
     const code = app.doShellScript('cat ' + q(payload));
     setClip(code); key(9, CMD); delay(0.7);
     if (allowPasting) {
@@ -106,7 +121,7 @@
       key(0, CMD); key(51);
       setClip(code); key(9, CMD); delay(0.7);
     }
-    if (!safe()) { log('stop: focus moved before running'); return 'unsafe'; }
+    if (!safe()) { log('stop: focus moved before running'); return finish('unsafe'); }
     key(36); delay(1.5);
     if (resultPath !== '-') { delay(2); app.doShellScript('pbpaste > ' + q(resultPath)); }
   } finally {
@@ -117,5 +132,5 @@
     if (btn) $.AXUIElementPerformAction(ObjC.castRefToObject(btn), $('AXPress'));
   }
   log('applied');
-  return 'applied';
+  return finish('applied');
 })();
