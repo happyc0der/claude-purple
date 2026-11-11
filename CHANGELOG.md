@@ -4,6 +4,9 @@
 - macOS: re-apply the theme when Claude reloads its page without restarting. The app does
   this to load new web code, which wiped the colours until the next restart. The watcher now
   notices the reload from the `Loaded https://claude.ai` line in Claude's own log.
+- Windows: apply within about 10 seconds of Claude opening instead of up to a minute. The
+  watcher checks for a new Claude every 3 s (it remembers the process, so this stays cheap),
+  applies once the window has drawn for 8 s, and retries every 5 s if you are typing.
 
 ## 1.0.0 (2026-11-09)
 First tagged release.

@@ -198,21 +198,30 @@ if ($Check) {
 }
 
 if ($Watch) {
-    $lastStart = $null
+    # Checks for a newly started Claude every 3 seconds (cheap: a process list), and for a
+    # grey window after a page reload every 30 seconds (a small screenshot of Claude only).
+    $lastStart = $null; $p = $null; $tick = 0; $retryAt = [datetime]::MinValue
     while ($true) {
-        $p = Get-Process claude -ErrorAction SilentlyContinue | Where-Object { $_.Path -match 'WindowsApps\\Claude_' } | Sort-Object StartTime | Select-Object -First 1
-        if ($p -and $p.StartTime -eq $lastStart -and (Test-LooksGrey)) {
+        # Reading every process's path is the costly part, so only rescan once the known
+        # Claude process has exited; otherwise just confirm that it is still alive.
+        if (-not $p -or $p.HasExited) {
+            $p = Get-Process claude -ErrorAction SilentlyContinue | Where-Object { $_.Path -match 'WindowsApps\\Claude_' } | Sort-Object StartTime | Select-Object -First 1
+        }
+        if ($p -and $p.StartTime -eq $lastStart -and ($tick % 10) -eq 0 -and (Test-LooksGrey)) {
             [void](Write-Log 'app looks grey again (page reload?), reapplying')
             $lastStart = $null
         }
-        if ($p -and $p.StartTime -ne $lastStart) {
-            # Give the interface time to load, then keep trying until it isn't interrupted.
-            Start-Sleep -Seconds 20
-            # An unexpected error is logged and retried, never allowed to stop the watcher.
-            try { $result = Invoke-Apply } catch { $result = Write-Log "error: $_" }
-            if ($result -eq 'applied') { $lastStart = $p.StartTime }
+        if ($p -and $p.StartTime -ne $lastStart -and (Get-Date) -ge $retryAt) {
+            # Apply as soon as the page has had a few seconds to draw, not after a fixed wait.
+            $age = ((Get-Date) - $p.StartTime).TotalSeconds
+            if ((Get-MainWindow) -and $age -ge 8) {
+                # An unexpected error is logged and retried, never allowed to stop the watcher.
+                try { $result = Invoke-Apply } catch { $result = Write-Log "error: $_" }
+                if ($result -eq 'applied') { $lastStart = $p.StartTime } else { $retryAt = (Get-Date).AddSeconds(5) }
+            }
         }
-        Start-Sleep -Seconds 30
+        $tick++
+        Start-Sleep -Seconds 3
     }
 }
 

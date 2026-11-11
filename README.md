@@ -87,7 +87,7 @@ The Claude desktop app has no custom-theme support, its files are signed and int
 - **Logged:** every run is recorded (`windows/apply-theme.log`, or `~/Library/Application Support/ClaudePurple/apply.log`).
 - **Read the scripts first:** they're short, and Developer Mode gives DevTools access to your signed-in session.
 
-**Performance:** the watchers check every 30 seconds and use no measurable CPU in between. Inside the app, a full recolour takes about 40 ms, and the code-block watcher wakes only when a new code block appears, not on every streamed word.
+**Performance:** on Windows the watcher looks for a newly opened Claude every 3 seconds and for a grey window every 30, at under 1% of one CPU core; on macOS it checks every 30 seconds. Inside the app, a full recolour takes about 40 ms, and the code-block watcher wakes only when a new code block appears, not on every streamed word.
 
 ## browser-ad-remover: what it saves
 Claude Code's built-in browser has no extension or content-blocking support, so the plugin hooks the browser tools and runs a small sweep just before Claude reads or screenshots a page. Measured on three ad-heavy pages:
