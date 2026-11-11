@@ -75,11 +75,11 @@ After a few idle seconds, a DevTools window flashes up and Claude turns purple.
 The Claude desktop app has no custom-theme support, its files are signed and integrity-checked, and it blocks remote debugging, so nothing is patched. Instead:
 
 1. **Developer Mode**, the app's own option, enables DevTools.
-2. When Claude starts, a small watcher (a per-user logon task on Windows, a LaunchAgent on macOS) waits until you've stopped typing, opens DevTools, and pastes [`theme/modern-purple.js`](theme/modern-purple.js) into the console.
+2. When Claude starts, or reloads its page to pick up new web code, a small watcher (a per-user logon task on Windows, a LaunchAgent on macOS) waits until you've stopped typing, opens DevTools, and pastes [`theme/modern-purple.js`](theme/modern-purple.js) into the console.
 3. That script only sets **colour values**. It finds the app's neutral greys at runtime, including styles that menus load later, and shifts their hue while keeping their brightness. It also maps the app's code theme to the VS Code theme's syntax colours, including inside code blocks.
 
 4. If Claude is minimized, it restores the window for those few seconds and minimizes it again.
-5. On Windows it then checks a picture of Claude's own window (never the rest of your screen) to confirm the colours took, and re-applies if a page reload turns the app grey again.
+5. On Windows it then checks a picture of Claude's own window (never the rest of your screen) to confirm the colours took, and re-applies if the app turns grey again. On macOS it spots page reloads through the `Loaded https://claude.ai` line Claude writes to its own log.
 
 **Safety:**
 - **Window check:** the automation only types after confirming, by window title, that the focused window is Claude's "Developer Tools" for claude.ai. Otherwise it stops.
@@ -102,7 +102,6 @@ Claude Code's built-in browser has no extension or content-blocking support, so 
 
 ## Limitations
 - **Terminal text:** the terminal pane sets its text colours in code, so only its background is recoloured.
-- **Page reloads on macOS:** a reload without an app restart isn't detected yet. Windows notices and re-applies.
 - **Pop-out windows:** quick entry and other separate windows aren't recoloured.
 - **App updates:** if Anthropic renames its colour values, parts fall back to the default colours until the theme file is updated.
 

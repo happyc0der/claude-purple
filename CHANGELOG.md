@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.0.1 (2026-11-11)
+- macOS: re-apply the theme when Claude reloads its page without restarting. The app does
+  this to load new web code, which wiped the colours until the next restart. The watcher now
+  notices the reload from the `Loaded https://claude.ai` line in Claude's own log.
+
 ## 1.0.0 (2026-11-09)
 First tagged release.
 

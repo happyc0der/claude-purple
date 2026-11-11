@@ -76,6 +76,7 @@ Merge; don't replace the file.
 | macOS log says `Claude did not come to the front` | Another app (often System Settings) was in front; it retries. |
 | `skip: keyboard or mouse in use` | Expected. It waits until the user is idle. |
 | Parts are still grey after an app update | The app renamed colour variables. Update `theme/modern-purple.js`. |
+| macOS went grey without a restart | Claude reloaded its page. The watcher re-applies within about a minute of the next 4 s idle pause; check `apply.log`. |
 | Claude was minimized | Fine: the scripts restore the window for a few seconds and minimize it again. |
 
 ## Uninstall
