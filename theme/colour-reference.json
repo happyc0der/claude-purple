@@ -43,6 +43,26 @@
   "link / tool summary": {
    "color": "rgb(154, 154, 240)",
    "weight": "433.25"
+  },
+  "sidebar badge (Beta)": {
+   "color": "rgb(154, 154, 240)",
+   "weight": "500",
+   "background": "color(srgb 1 1 1 / 0.05)"
+  },
+  "mode switch (Claude / Code)": {
+   "background": "color(srgb 1 1 1 / 0.05)"
+  },
+  "mode switch selected": {
+   "color": "rgb(226, 226, 226)",
+   "weight": "433.25",
+   "background": "color(srgb 1 1 1 / 0.1)"
+  },
+  "mode switch unselected": {
+   "color": "rgb(138, 132, 168)",
+   "weight": "433.25"
+  },
+  "sidebar scrollbar": {
+   "scrollbar": "rgba(166, 148, 209, 0.35) rgba(0, 0, 0, 0)"
   }
  },
  "vars": {

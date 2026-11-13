@@ -51,7 +51,7 @@ foreach ($role in $ref.roles.PSObject.Properties) {
     $want = $role.Value; $got = $live.roles.($role.Name)
     if ($null -eq $want) { continue }
     if ($null -eq $got) { $diffs += [pscustomobject]@{ Part = $role.Name; What = 'element'; Before = 'found'; Now = 'not found (the app changed its layout)' }; continue }
-    foreach ($k in 'color', 'background', 'weight') {
+    foreach ($k in 'color', 'background', 'weight', 'scrollbar') {
         $w = $want.$k; if ($null -eq $w) { continue }
         $g = $got.$k
         $same = if ($k -eq 'weight') { [Math]::Abs([double]$w - [double]$g) -lt 50 } else { Test-Same $w $g }

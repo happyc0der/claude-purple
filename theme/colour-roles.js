@@ -28,6 +28,18 @@ window.__probeResult = 'running';
     'composer box': read('[contenteditable="true"]', { bg: true }),
     'inline code': read('code:not(pre code)', { bg: true }),
     'link / tool summary': read('main a, main button[aria-expanded]'),
+    'sidebar badge (Beta)': read('.dframe-sidebar [data-cds="Badge"]', { bg: true }),
+    'mode switch (Claude / Code)': read('[data-cds="SegmentedControl"][aria-label="Mode"]', { bgOnly: true }),
+    'mode switch selected': (() => {
+      const g = document.querySelector('[data-cds="SegmentedControl"][aria-label="Mode"]');
+      if (!g) return null;
+      const on = read(g.querySelector('[role="radio"][aria-checked="true"] [data-cds="Icon"]') || g.querySelector('[role="radio"][aria-checked="true"]'));
+      // The highlight is a separate element drawn behind the selected option.
+      const pill = [...g.querySelectorAll('*')].find(e => !e.closest('[role="radio"]') && !/rgba\(0, 0, 0, 0\)|transparent/.test(getComputedStyle(e).backgroundColor));
+      return { ...on, background: pill ? getComputedStyle(pill).backgroundColor : 'none' };
+    })(),
+    'mode switch unselected': read('[data-cds="SegmentedControl"][aria-label="Mode"] [role="radio"][aria-checked="false"] [data-cds="Icon"]'),
+    'sidebar scrollbar': (() => { const s = document.querySelector('.dframe-nav-scroll'); return s ? { scrollbar: getComputedStyle(s).scrollbarColor } : null; })(),
   };
   // The theme's own colour values, as the app sees them now.
   const vars = {};
