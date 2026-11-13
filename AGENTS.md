@@ -83,6 +83,12 @@ Merge; don't replace the file.
 Windows: `pwsh -File windows\uninstall.ps1`. macOS: `bash macos/uninstall.sh`, then remove
 ClaudePurple from the Accessibility list. Restart Claude afterwards.
 
+## After a Claude update
+Run `pwsh -File windows\check-colours.ps1`. For each part it lists, change `theme/modern-purple.js`
+so that part gets its reference colour back (target the element and the custom property it reads),
+apply, and re-run until it reports that every part matches. Never invent new colours, and only run
+it with `-Save` when the user approves a new look.
+
 ## Changing this repo
 - Keep the reskin colours-only: no hidden elements, no changed behaviour.
 - Never send keys anywhere but a window confirmed by title as Claude's DevTools for claude.ai.

@@ -1,0 +1,60 @@
+{
+ "app": "Claude/5.11492.2",
+ "roles": {
+  "sidebar background": {
+   "background": "rgb(13, 2, 37)"
+  },
+  "sidebar top item (New, Search)": {
+   "color": "rgb(226, 226, 226)",
+   "weight": "433.25"
+  },
+  "sidebar section header (Pinned)": {
+   "color": "rgb(199, 146, 234)",
+   "weight": "700"
+  },
+  "sidebar session name": {
+   "color": "rgb(154, 154, 240)",
+   "weight": "400"
+  },
+  "sidebar selected session": {
+   "color": "rgb(226, 226, 226)",
+   "weight": "400"
+  },
+  "sidebar selected row background": {
+   "background": "rgba(76, 11, 216, 0.55)"
+  },
+  "page background": {
+   "background": "rgb(15, 3, 43)"
+  },
+  "page text": {
+   "color": "rgb(226, 226, 226)",
+   "weight": "400"
+  },
+  "composer box": {
+   "color": "rgb(226, 226, 226)",
+   "weight": "400",
+   "background": "rgba(0, 0, 0, 0)"
+  },
+  "inline code": {
+   "color": "rgb(252, 143, 216)",
+   "weight": "400",
+   "background": "rgba(255, 255, 255, 0.075)"
+  },
+  "link / tool summary": {
+   "color": "rgb(154, 154, 240)",
+   "weight": "433.25"
+  }
+ },
+ "vars": {
+  "--cds-text-primary": "#e2e2e2",
+  "--cds-text-secondary": "#9a9af0",
+  "--cds-text-muted": "#8a84a8",
+  "--cds-fizzy-lake-color-placeholder": "#b8b8f8",
+  "--code-theme-dark-bg": "#1b1133",
+  "--df-selected": "#4c0bd88c",
+  "--df-hover": "#6471e42e",
+  "--text-100": "0 0% 88.6%",
+  "--text-200": "240 73% 77.3%",
+  "--text-400": "250 17.7% 58.8%"
+ }
+}

@@ -1,6 +1,8 @@
 # Changelog
 
 ## 1.0.2 (2026-11-13)
+- New `windows/check-colours.ps1` and `theme/colour-reference.json`: the approved colour of each part
+  of the screen is saved, and after an app update the check lists exactly which parts changed.
 Fixes for Claude desktop 5.11492:
 - Sidebar session names are lavender again. This version moved them onto the primary text
   colour, so they had turned white. The top menu items and the selected session stay white.

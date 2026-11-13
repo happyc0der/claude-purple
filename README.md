@@ -105,6 +105,18 @@ Claude Code's built-in browser has no extension or content-blocking support, so 
 - **Pop-out windows:** quick entry and other separate windows aren't recoloured.
 - **App updates:** if Anthropic renames its colour values, parts fall back to the default colours until the theme file is updated.
 
+## After an app update: keeping the same colours
+`theme/colour-reference.json` records the approved colour of each part of the screen (sidebar items,
+headers, session names, chat text, links, code…). After Claude updates, run:
+
+```powershell
+pwsh -File windows\check-colours.ps1
+```
+
+It reads the live colours (read-only) and lists each part that no longer matches, with the old and new
+colour, so the theme can be fixed to bring the old look back. `-Save` records a new reference, for
+when you change the look on purpose. (Windows only for now.)
+
 ## Troubleshooting
 | Symptom | Fix |
 |---|---|
