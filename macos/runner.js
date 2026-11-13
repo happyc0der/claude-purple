@@ -95,6 +95,8 @@
   const setClip = s => { pb.clearContents; pb.setStringForType($(s), $.NSPasteboardTypeString); };
   const getClip = () => { const s = pb.stringForType($.NSPasteboardTypeString); return s && s.js !== undefined ? s.js : ''; };
   const safe = () => frontIsClaude() && isDev(focusedTitle(axApp));
+  // Before a second DevTools shortcut: Claude in front, its main window focused.
+  const safeToPress = () => frontIsClaude() && !!mainWin && focusedTitle(axApp) === mainWin.title;
 
   const wasMin = mainWin ? isMin(mainWin.el) : false;
   if (wasMin) { setMin(mainWin.el, false); delay(1.2); }
@@ -107,7 +109,14 @@
   if (!dev) {
     if (isDev(focusedTitle(axApp))) { log('stop: DevTools has focus but was not listed as a window'); return finish('unexpected'); }
     key(34, CMD | OPT); // Cmd+Opt+I, the app's own "Show Dev Tools" shortcut
-    for (let i = 0; i < 40 && !dev; i++) { delay(0.25); dev = windows(axApp).find(w => isDev(w.title)); }
+    for (let i = 0; i < 20 && !dev; i++) { delay(0.25); dev = windows(axApp).find(w => isDev(w.title)); }
+    // Since app 5.11492 the shortcut is a toggle that can still think DevTools is open after
+    // it was closed, so the first press only "closes" it. Press it once more.
+    if (!dev && safeToPress()) {
+      log('DevTools did not appear; pressing the shortcut again');
+      key(34, CMD | OPT);
+      for (let i = 0; i < 40 && !dev; i++) { delay(0.25); dev = windows(axApp).find(w => isDev(w.title)); }
+    }
   }
   if (!dev) { log('stop: no window titled Developer Tools appeared (is Developer Mode on?)'); return finish('no devtools'); }
   $.AXUIElementPerformAction(dev.el, $('AXRaise'));

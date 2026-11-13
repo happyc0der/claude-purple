@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.0.2 (2026-11-13)
+Fixes for Claude desktop 5.11492:
+- Sidebar session names are lavender again. This version moved them onto the primary text
+  colour, so they had turned white. The top menu items and the selected session stay white.
+- Opening DevTools could fail on every other run: the shortcut is a toggle that sometimes
+  still thinks DevTools is open after it was closed. Both platforms now press it a second time
+  if DevTools hasn't appeared after 5 seconds.
+
 ## 1.0.1 (2026-11-11)
 - macOS: re-apply the theme when Claude reloads its page without restarting. The app does
   this to load new web code, which wiped the colours until the next restart. The watcher now

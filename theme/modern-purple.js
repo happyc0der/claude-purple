@@ -138,6 +138,9 @@
   html[data-sidebar-vibrancy] .dframe-root .dframe-sidebar, html .dframe-root[data-variant] .dframe-sidebar { background-image: none !important; background-color: #0d0225 !important; }
   /* macOS resets the sidebar text colours for its glass effect; use the theme's, as on Windows. */
   html .dframe-sidebar, html .dframe-sidebar * { --cds-text-primary: #e2e2e2 !important; --cds-text-secondary: #9a9af0 !important; --cds-text-muted: #8a84a8 !important; }
+  /* Session names are lavender, as before app 5.11492 (which moved them onto the primary
+     text colour); the top menu items and the selected session stay white. */
+  html .dframe-sidebar [data-row-main-button]:not([data-row-nav]):not([aria-current]) { --cds-text-primary: #9a9af0 !important; }
   .hljs-comment, .hljs-quote { color: #616769 !important; }
   .hljs-keyword, .hljs-selector-tag, .hljs-doctag, .hljs-meta .hljs-keyword { color: #ad6dd8 !important; }
   .hljs-string, .hljs-symbol, .hljs-template-tag { color: #a9cf6f !important; }

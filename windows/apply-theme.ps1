@@ -103,7 +103,14 @@ function Invoke-ApplyCore($main) {
         [void][ThemeWin]::SetForegroundWindow($main.Handle)
         if (-not (Wait-For { [ThemeWin]::GetForegroundWindow() -eq $main.Handle } 3)) { return Write-Log 'stop: could not focus Claude' }
         [System.Windows.Forms.SendKeys]::SendWait('^%i')
-        $devtools = Wait-For { Get-DevToolsWindow } 15
+        $devtools = Wait-For { Get-DevToolsWindow } 5
+        if (-not $devtools -and [ThemeWin]::GetForegroundWindow() -eq $main.Handle) {
+            # Since app 5.11492 the shortcut is a toggle that can still think DevTools is open
+            # after it was closed, so the first press only "closes" it. Press it once more.
+            [void](Write-Log 'DevTools did not appear; pressing the shortcut again')
+            [System.Windows.Forms.SendKeys]::SendWait('^%i')
+            $devtools = Wait-For { Get-DevToolsWindow } 15
+        }
         if (-not $devtools) { return Write-Log 'stop: DevTools did not open (is Developer Mode on?)' }
     }
 
