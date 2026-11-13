@@ -5,8 +5,8 @@
    "background": "rgb(13, 2, 37)"
   },
   "sidebar top item (New, Search)": {
-   "color": "rgb(226, 226, 226)",
-   "weight": "433.25"
+   "color": "rgb(154, 154, 240)",
+   "weight": "435"
   },
   "sidebar section header (Pinned)": {
    "color": "rgb(199, 146, 234)",

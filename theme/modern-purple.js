@@ -141,6 +141,8 @@
   /* Session names are lavender, as before app 5.11492 (which moved them onto the primary
      text colour); the top menu items and the selected session stay white. */
   html .dframe-sidebar [data-row-main-button]:not([data-row-nav]):not([aria-current]) { --cds-text-primary: #9a9af0 !important; }
+  /* Top menu items (New, Search, Projects...) are lavender too (Keshav 2026-11-13). */
+  html .dframe-sidebar [data-row-main-button][data-row-nav]:not([aria-current]) { --cds-text-primary: #9a9af0 !important; }
   .hljs-comment, .hljs-quote { color: #616769 !important; }
   .hljs-keyword, .hljs-selector-tag, .hljs-doctag, .hljs-meta .hljs-keyword { color: #ad6dd8 !important; }
   .hljs-string, .hljs-symbol, .hljs-template-tag { color: #a9cf6f !important; }

@@ -18,7 +18,7 @@ window.__probeResult = 'running';
   const root = getComputedStyle(document.documentElement);
   const roles = {
     'sidebar background': read('.dframe-sidebar', { bgOnly: true }),
-    'sidebar top item (New, Search)': read('.dframe-sidebar [data-row-nav]'),
+    'sidebar top item (New, Search)': read([...document.querySelectorAll('.dframe-sidebar [data-row-nav] *')].find(x => /^(New|Search)$/.test([...x.childNodes].filter(n => n.nodeType === 3).map(n => n.textContent).join('').trim()))),
     'sidebar section header (Pinned)': read('[data-sidebar-group-label] [data-group-toggle]'),
     'sidebar session name': read('.dframe-sidebar [data-row-main-button]:not([data-row-nav]):not([aria-current])'),
     'sidebar selected session': read('.dframe-sidebar [data-row-main-button][aria-current]'),
