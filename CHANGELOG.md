@@ -4,6 +4,9 @@
 - New `windows/check-colours.ps1` and `theme/colour-reference.json`: the approved colour of each part
   of the screen is saved, and after an app update the check lists exactly which parts changed.
 Fixes for Claude desktop 5.11492:
+- Windows: the theme now applies after an update restart even when another app is in front.
+  Windows blocked the script from switching to Claude ("could not focus Claude"); it now joins
+  the front window's input queue for the switch, and puts your app back in front afterwards.
 - The sidebar top items (New, Search, Projects...) are lavender, like the session names.
 - Sidebar session names are lavender again. This version moved them onto the primary text
   colour, so they had turned white. The top menu items and the selected session stay white.
