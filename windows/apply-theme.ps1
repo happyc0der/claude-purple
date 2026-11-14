@@ -39,6 +39,22 @@ public static class ThemeWin {
   [DllImport("user32.dll")] public static extern bool ShowWindow(IntPtr h, int cmd);
   [StructLayout(LayoutKind.Sequential)] public struct RECT { public int Left, Top, Right, Bottom; }
   [StructLayout(LayoutKind.Sequential)] public struct LASTINPUT { public uint cbSize; public uint dwTime; }
+  [DllImport("user32.dll")] public static extern bool AttachThreadInput(uint a, uint b, bool attach);
+  [DllImport("user32.dll")] public static extern bool BringWindowToTop(IntPtr h);
+  [DllImport("user32.dll")] public static extern bool IsWindow(IntPtr h);
+  [DllImport("kernel32.dll")] public static extern uint GetCurrentThreadId();
+  // Windows refuses SetForegroundWindow from a background process while another app is
+  // in front. Joining the front window's input queue for a moment lets the switch through.
+  public static bool ForceForeground(IntPtr h) {
+    IntPtr fg = GetForegroundWindow();
+    if (fg == h) return true;
+    uint pid; uint fgThread = GetWindowThreadProcessId(fg, out pid);
+    uint me = GetCurrentThreadId();
+    bool attached = fgThread != 0 && fgThread != me && AttachThreadInput(me, fgThread, true);
+    try { BringWindowToTop(h); SetForegroundWindow(h); }
+    finally { if (attached) AttachThreadInput(me, fgThread, false); }
+    return GetForegroundWindow() == h;
+  }
   public static uint IdleMs() { var i = new LASTINPUT(); i.cbSize = 8; GetLastInputInfo(ref i); return (uint)Environment.TickCount - i.dwTime; }
 }
 '@
@@ -91,16 +107,21 @@ function Invoke-Apply {
     $main = Get-MainWindow
     if (-not $main) { return Write-Log 'skip: Claude is not running' }
     if ([ThemeWin]::IdleMs() -lt 4000) { return Write-Log 'skip: keyboard or mouse in use' }
+    $prev = [ThemeWin]::GetForegroundWindow()
     $wasMinimized = [ThemeWin]::IsIconic($main.Handle)
     if ($wasMinimized) { [void][ThemeWin]::ShowWindow($main.Handle, 9); Start-Sleep -Milliseconds 1200 }
-    try { Invoke-ApplyCore $main } finally { if ($wasMinimized) { [void][ThemeWin]::ShowWindow($main.Handle, 6) } }
+    try { Invoke-ApplyCore $main } finally {
+        if ($wasMinimized) { [void][ThemeWin]::ShowWindow($main.Handle, 6) }
+        # Hand the keyboard back to whatever app was in front before.
+        elseif ($prev -ne [IntPtr]::Zero -and $prev -ne $main.Handle -and [ThemeWin]::IsWindow($prev)) { [void][ThemeWin]::ForceForeground($prev) }
+    }
 }
 
 function Invoke-ApplyCore($main) {
 
     $devtools = Get-DevToolsWindow
     if (-not $devtools) {
-        [void][ThemeWin]::SetForegroundWindow($main.Handle)
+        [void][ThemeWin]::ForceForeground($main.Handle)
         if (-not (Wait-For { [ThemeWin]::GetForegroundWindow() -eq $main.Handle } 3)) { return Write-Log 'stop: could not focus Claude' }
         [System.Windows.Forms.SendKeys]::SendWait('^%i')
         $devtools = Wait-For { Get-DevToolsWindow } 5
@@ -114,7 +135,7 @@ function Invoke-ApplyCore($main) {
         if (-not $devtools) { return Write-Log 'stop: DevTools did not open (is Developer Mode on?)' }
     }
 
-    [void][ThemeWin]::SetForegroundWindow($devtools.Handle)
+    [void][ThemeWin]::ForceForeground($devtools.Handle)
     if (-not (Wait-For { [ThemeWin]::GetForegroundWindow() -eq $devtools.Handle } 3)) { return Write-Log 'stop: could not focus DevTools' }
 
     $saved = $null
@@ -154,7 +175,7 @@ function Invoke-ApplyCore($main) {
     }
     if ([ThemeWin]::GetForegroundWindow() -eq $devtools.Handle) { [System.Windows.Forms.SendKeys]::SendWait('%{F4}') }
     Start-Sleep -Milliseconds 800
-    [void][ThemeWin]::SetForegroundWindow($main.Handle)
+    [void][ThemeWin]::ForceForeground($main.Handle)
     Start-Sleep -Milliseconds 500
     $shot = Join-Path $here 'last-apply.png'
     try { Save-WindowShot $main.Handle $shot } catch { [void](Write-Log "screenshot failed: $_") }
