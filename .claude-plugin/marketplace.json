@@ -1,7 +1,14 @@
 {
   "name": "claude-purple",
-  "owner": { "name": "happyc0der" },
+  "owner": {
+    "name": "happyc0der"
+  },
   "plugins": [
+    {
+      "name": "purple",
+      "source": "./plugins/purple",
+      "description": "Modern Purple colours and an animated background for the Claude desktop and mobile apps, through the official theme API."
+    },
     {
       "name": "browser-ad-remover",
       "source": "./plugins/browser-ad-remover",

@@ -10,6 +10,27 @@ A purple reskin for the **Claude desktop app** (Windows and macOS) and **Claude 
 
 > **Unofficial.** Not made by, endorsed by, or affiliated with Anthropic. It changes colours only, so the app works exactly as before. It relies on Developer Mode and on the app's internal colour names, so an app update can partly undo it until the theme file is updated.
 
+## Recommended: the theme mod
+Claude Code now supports theme mods on the desktop app. The **purple** plugin uses that official
+API, so it needs no Developer Mode and nothing is pasted into DevTools:
+
+```
+/plugin marketplace add happyc0der/claude-purple
+/plugin install purple@claude-purple
+/plugin install browser-ad-remover@claude-purple
+```
+
+Start a new session (or send a message in one) and the app turns purple. What it sets:
+
+- **Colours:** Modern Purple backgrounds and text, the whole grey scale in violet (borders, hover
+  and selected rows, menus, charts), accents and code colours, and diff / pull-request colours.
+- **Background:** an animated scene with drifting violet glows, a dot grid, sweeping light beams,
+  a turning dotted globe and a pulsing contribution grid. It stops under reduced motion.
+- **Status line:** shows `purple + adblock` at the bottom.
+
+Needs a Claude desktop version that draws mod themes. The DevTools method below still works for
+older versions.
+
 ## Quick start: let Claude set it up
 Clone the repo, open Claude Code in it, and ask:
 
